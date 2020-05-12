@@ -16,7 +16,7 @@ import (
 
 var (
 	S3_BUCKET = ""
-	S3_REGION = "us-east-1"
+	S3_REGION = ""
 )
 
 func main() {
