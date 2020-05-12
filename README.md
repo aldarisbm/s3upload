@@ -1,4 +1,5 @@
 - Set the $GOPATH to pwd
+- Set your AWS env vars
 - `go get -u ./...`
 - `go run s3upload -path=path/to/file -bucketname=mybucket`
 - bam
