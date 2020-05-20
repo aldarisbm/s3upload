@@ -118,8 +118,23 @@ func putFileInS3(s *session.Session, fileDir string) (string, error) {
 // putFolderInS3 will upload multiple files to S3, it will require a pre-built aws session
 // and will set file info like content type and encryption on the uploaded file.
 func putFolderInS3(s *session.Session, fileDir string) ([]string, error) {
-	var sli []string
-	return sli, nil
+	var outputs []string
+	fileNames, err := getFileNames(fileDir)
+	if err != nil {
+		return nil, errors.New("Error parsing the files inside the folder")
+	}
+	for _, fileName := range fileNames {
+		output, err := putFolderInS3(s, fileName)
+		if err != nil {
+			return nil, fmt.Errorf("Error trying to retrieve: %s", fileName)
+		}
+		outputs = append(outputs, output)
+	}
+	return outputs, nil
+}
+
+func getFileNames(fileDir string) ([]string, error) {
+
 }
 
 func isXML(fileDir string) bool {
