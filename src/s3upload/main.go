@@ -29,12 +29,12 @@ func main() {
 	pathToFile := flag.String(
 		"path",
 		"",
-		"Path to the file to XML file to upload, key in s3 will the basepath",
+		"Path to the file to XML file to upload, key in s3 will the basepath\nCannot be used in conjuction with -folder",
 	)
 	pathToFolder := flag.String(
 		"folder",
 		"",
-		"Path to the folder containing XML files, key in s3 will be the basepath",
+		"Path to the folder containing XML files, key in s3 will be the basepath\nCannot be used in conjuction with -path",
 	)
 	s3Region := flag.String(
 		"region",
@@ -42,8 +42,10 @@ func main() {
 		"AWS region for the bucket location",
 	)
 	flag.Parse()
+
 	S3_REGION = *s3Region
 	S3_BUCKET = *s3Bucket
+
 	fmt.Printf("Initializing AWS session...\n")
 	s, err := session.NewSession(&aws.Config{Region: aws.String(S3_REGION)})
 	if err != nil {
