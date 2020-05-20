@@ -124,7 +124,7 @@ func putFolderInS3(s *session.Session, fileDir string) ([]string, error) {
 		return nil, errors.New("Error parsing the files inside the folder")
 	}
 	for _, fileName := range fileNames {
-		output, err := putFolderInS3(s, fileName)
+		output, err := putFileInS3(s, fileName)
 		if err != nil {
 			return nil, fmt.Errorf("Error trying to retrieve: %s", fileName)
 		}
@@ -134,7 +134,14 @@ func putFolderInS3(s *session.Session, fileDir string) ([]string, error) {
 }
 
 func getFileNames(fileDir string) ([]string, error) {
-
+	var files []string
+	err := filepath.Walk(fileDir, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			files = append(files, path)
+		}
+		return nil
+	})
+	return files, err
 }
 
 func isXML(fileDir string) bool {
