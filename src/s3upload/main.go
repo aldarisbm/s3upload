@@ -42,14 +42,14 @@ func main() {
 		"AWS region for the bucket location",
 	)
 	flag.Parse()
-
 	S3_REGION = *s3Region
 	S3_BUCKET = *s3Bucket
+	fmt.Printf("Initializing AWS session...\n")
 	s, err := session.NewSession(&aws.Config{Region: aws.String(S3_REGION)})
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	fmt.Println("AWS Session Initialized.\n")
 	outputs, err := handleInput(*pathToFile, *pathToFolder, s)
 	if err != nil {
 		fmt.Errorf("Something went wrong")
@@ -62,25 +62,29 @@ func main() {
 }
 
 func handleInput(pathToFile, pathToFolder string, s *session.Session) ([]string, error) {
+	fmt.Printf("Starting to handle input...\n")
 	var outputs []string
 
 	switch {
 	case pathToFile != "" && pathToFolder != "":
+		fmt.Printf("Please refer to -h for usage...\n")
 		return nil, errors.New("Provide a file path or a folder path, not both")
 	case pathToFile != "":
+		fmt.Printf("Starting single file upload...\n")
 		output, err := putFileInS3(s, pathToFile)
 		if err != nil {
 			return nil, err
 		}
 		return append(outputs, output), nil
 	case pathToFolder != "":
+		fmt.Printf("Starting folder upload...\n")
 		outputs, err := putFolderInS3(s, pathToFolder)
 		if err != nil {
 			return nil, err
 		}
 		return outputs, nil
 	default:
-		return nil, errors.New("Wrong input, refer to -h")
+		return nil, errors.New("Wrong input, Please refer to -h for usage")
 	}
 }
 
@@ -88,9 +92,10 @@ func handleInput(pathToFile, pathToFolder string, s *session.Session) ([]string,
 // and will set file info like content type and encryption on the uploaded file.
 func putFileInS3(s *session.Session, fileDir string) (string, error) {
 	if !isXML(fileDir) {
+		fmt.Printf("Please provide an XML file\n")
 		return "", errors.New("Provide an XML file")
 	}
-
+	fmt.Printf("Starting upload of file: %s\n", fileDir)
 	file, err := os.Open(fileDir)
 	if err != nil {
 		return "", err
@@ -139,11 +144,13 @@ func getFileNames(fileDir string) ([]string, error) {
 		if !info.IsDir() {
 			files = append(files, path)
 		}
+		fmt.Printf("Ignoring sub-directories...\n")
 		return nil
 	})
 	return files, err
 }
 
 func isXML(fileDir string) bool {
+	fmt.Printf("Validating XML...\n")
 	return filepath.Ext(fileDir) == ".xml" || filepath.Ext(fileDir) == ".XML"
 }
