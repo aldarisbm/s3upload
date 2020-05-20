@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -23,15 +24,23 @@ func main() {
 	s3Bucket := flag.String(
 		"bucketname",
 		"",
-		"Name of s3 bucket to upload to")
+		"Name of s3 bucket to upload to",
+	)
 	pathToFile := flag.String(
 		"path",
 		"",
-		"Path to the file to upload, key in s3 will the basepath")
+		"Path to the file to XML file to upload, key in s3 will the basepath",
+	)
+	pathToFolder := flag.String(
+		"folder",
+		"",
+		"Path to the folder containing XML files, key in s3 will be the basepath",
+	)
 	s3Region := flag.String(
 		"region",
 		"us-east-1",
-		"AWS region for the bucket location")
+		"AWS region for the bucket location",
+	)
 	flag.Parse()
 
 	S3_REGION = *s3Region
@@ -40,16 +49,48 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	output, err := PutFileInS3(s, *pathToFile)
+
+	outputs, err := handleInput(*pathToFile, *pathToFolder, s)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Errorf("Something went wrong")
+		os.Exit(1)
 	}
-	fmt.Printf(output)
+
+	for i, output := range outputs {
+		fmt.Printf("File %d: %s", i, output)
+	}
 }
 
-// PutFileInS3 will upload a single file to S3, it will require a pre-built aws session
+func handleInput(pathToFile, pathToFolder string, s *session.Session) ([]string, error) {
+	var outputs []string
+
+	switch {
+	case pathToFile != "" && pathToFolder != "":
+		return nil, errors.New("Provide a file path or a folder path, not both")
+	case pathToFile != "":
+		output, err := putFileInS3(s, pathToFile)
+		if err != nil {
+			return nil, err
+		}
+		return append(outputs, output), nil
+	case pathToFolder != "":
+		outputs, err := putFolderInS3(s, pathToFolder)
+		if err != nil {
+			return nil, err
+		}
+		return outputs, nil
+	default:
+		return nil, errors.New("Wrong input, refer to -h")
+	}
+}
+
+// putFileInS3 will upload a single file to S3, it will require a pre-built aws session
 // and will set file info like content type and encryption on the uploaded file.
-func PutFileInS3(s *session.Session, fileDir string) (string, error) {
+func putFileInS3(s *session.Session, fileDir string) (string, error) {
+	if !isXML(fileDir) {
+		return "", errors.New("Provide an XML file")
+	}
+
 	file, err := os.Open(fileDir)
 	if err != nil {
 		return "", err
@@ -72,4 +113,15 @@ func PutFileInS3(s *session.Session, fileDir string) (string, error) {
 		ServerSideEncryption: aws.String("AES256"),
 	})
 	return fmt.Sprintf("%s", *output), err
+}
+
+// putFolderInS3 will upload multiple files to S3, it will require a pre-built aws session
+// and will set file info like content type and encryption on the uploaded file.
+func putFolderInS3(s *session.Session, fileDir string) ([]string, error) {
+	var sli []string
+	return sli, nil
+}
+
+func isXML(fileDir string) bool {
+	return filepath.Ext(fileDir) == ".xml" || filepath.Ext(fileDir) == ".XML"
 }
