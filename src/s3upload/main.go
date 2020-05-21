@@ -59,7 +59,7 @@ func main() {
 	}
 
 	for i, output := range outputs {
-		fmt.Printf("File %d: %s", i, output)
+		fmt.Printf("File %d: %s\n", i, output)
 	}
 }
 
