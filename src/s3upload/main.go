@@ -155,6 +155,6 @@ func getFileNames(fileDir string) ([]string, error) {
 }
 
 func isXML(fileDir string) bool {
-	fmt.Printf("Validating XML...\n")
+	fmt.Printf("Validating XML extension...\n")
 	return filepath.Ext(fileDir) == ".xml" || filepath.Ext(fileDir) == ".XML"
 }
