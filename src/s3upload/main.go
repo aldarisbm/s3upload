@@ -72,12 +72,15 @@ func handleInput(pathToFile, pathToFolder string, s *session.Session) ([]string,
 		fmt.Printf("Please refer to -h for usage...\n")
 		return nil, errors.New("Provide a file path or a folder path, not both")
 	case pathToFile != "":
-		fmt.Printf("Starting single file upload...\n")
-		output, err := putFileInS3(s, pathToFile)
-		if err != nil {
-			return nil, err
+		if isXML(pathToFile) {
+			fmt.Printf("Starting single file upload...\n")
+			output, err := putFileInS3(s, pathToFile)
+			if err != nil {
+				return nil, err
+			}
+			return append(outputs, output), nil
 		}
-		return append(outputs, output), nil
+		return nil, errors.New("Must be an XML file")
 	case pathToFolder != "":
 		fmt.Printf("Starting folder upload...\n")
 		outputs, err := putFolderInS3(s, pathToFolder)
@@ -93,10 +96,6 @@ func handleInput(pathToFile, pathToFolder string, s *session.Session) ([]string,
 // putFileInS3 will upload a single file to S3, it will require a pre-built aws session
 // and will set file info like content type and encryption on the uploaded file.
 func putFileInS3(s *session.Session, fileDir string) (string, error) {
-	if !isXML(fileDir) {
-		fmt.Printf("Please provide an XML file\n")
-		return "", errors.New("Provide an XML file")
-	}
 	fmt.Printf("Starting upload of file: %s\n", fileDir)
 	file, err := os.Open(fileDir)
 	if err != nil {
@@ -131,11 +130,14 @@ func putFolderInS3(s *session.Session, fileDir string) ([]string, error) {
 		return nil, errors.New("Error parsing the files inside the folder")
 	}
 	for _, fileName := range fileNames {
-		output, err := putFileInS3(s, fileName)
-		if err != nil {
-			return nil, fmt.Errorf("Error trying to retrieve: %s", fileName)
+		if isXML(fileName) {
+			output, err := putFileInS3(s, fileName)
+			if err != nil {
+				return nil, fmt.Errorf("Error trying to retrieve: %s", fileName)
+			}
+			outputs = append(outputs, output)
 		}
-		outputs = append(outputs, output)
+		continue
 	}
 	return outputs, nil
 }
