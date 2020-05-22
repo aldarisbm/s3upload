@@ -145,10 +145,10 @@ func putFolderInS3(s *session.Session, fileDir string) ([]string, error) {
 func getFileNames(fileDir string) ([]string, error) {
 	var files []string
 	err := filepath.Walk(fileDir, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			files = append(files, path)
+		if info.IsDir() {
+			fmt.Printf("Ignoring sub-directories...\n")
 		}
-		fmt.Printf("Ignoring sub-directories...\n")
+		files = append(files, path)
 		return nil
 	})
 	return files, err
